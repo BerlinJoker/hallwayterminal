@@ -1,0 +1,612 @@
+esphome:
+  name: epaper
+
+esp32:
+  board: mhetesp32minikit #started with an esp32 devkit board, but had power supply issues for the display etc, so switched to a quinled esp32 board
+  framework:
+    type: arduino
+
+# Enable logging
+logger:
+
+#needed for parsing the weather forecast data
+json:
+
+# Enable Home Assistant API
+api:
+  password: ""
+
+ota:
+  - platform: esphome
+    password: ""
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "Epaper Fallback Hotspot"
+    password: !secret ap_password
+
+captive_portal:
+
+# neopixel used mainly for co2 level notification, but can be triggered by HA for other usecases as well
+light:
+  - platform: neopixelbus
+    type: GRB
+    variant: WS2812X
+    pin: 13
+    num_leds: 3
+    name: "LED notification hallway"
+    id: led_notification_hallway
+    effects:
+      - addressable_twinkle:
+          name: "Twinkle"
+          twinkle_probability: 5%
+          progress_interval: 4ms
+
+# used by the co2 sensor          
+uart:
+  rx_pin: 21
+  tx_pin: 22
+  baud_rate: 9600
+
+
+font:  
+  - file: 'DejaVuSansMono-Bold.ttf'
+    id: dejamonobold
+    size: 44
+    glyphs:
+      ['&', '@', '!', ',', '.', '"', '%', '(', ')', '+', '-', '_', ':', '°', '0',
+       '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E',
+       'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S',
+       'T', 'U', 'V', 'W', 'X', 'Y', 'Z', ' ', 'a', 'b', 'c', 'd', 'e', 'f',
+       'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't',
+       'u', 'v', 'w', 'x', 'y', 'z','å', 'ä', 'ö', '/']
+       
+  - file: 'DejaVuSansMono-Bold.ttf'
+    id: dejamonoboldsmall
+    size: 24
+    glyphs:
+      ['&', '@', '!', ',', '.', '"', '%', '(', ')', '+', '-', '_', ':', '°', '0',
+       '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E',
+       'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S',
+       'T', 'U', 'V', 'W', 'X', 'Y', 'Z', ' ', 'a', 'b', 'c', 'd', 'e', 'f',
+       'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't',
+       'u', 'v', 'w', 'x', 'y', 'z','å', 'ä', 'ö', '/']
+       
+  - file: "materialdesignicons-webfont.ttf"
+    id: icons_24 
+    size: 24
+    bpp: 4 
+    glyphs: [
+      "\U000F05A8", #sun icon for uv index
+      "\U000F0A79" #trash icon for, well, the trash reminder
+      ]
+
+# weather state icons handdrawn by my wife, plant/rain icons pixeled together by me for the chance of rain graph, raccoon because who doesn't like raccoons
+# weather icons with "45" as part of the name were part of a discarted second page/screen that showed the weekly weather forecast
+image:
+  - file: "moonthick.bmp"
+    id: moonthick
+  - file: "moonthin.bmp"
+    id: moonthin
+  - file: "clear-night.bmp"
+    id: clear_night
+  - file: "cloudy.bmp"
+    id: cloudy
+  - file: "exceptional.bmp"
+    id: exceptional
+  - file: "fog.bmp"
+    id: fog
+  - file: "hail.bmp"
+    id: hail
+  - file: "lightning.bmp"
+    id: lightning
+  - file: "lightning-rainy.bmp"
+    id: lightning_rainy
+  - file: "partlycloudy.bmp"
+    id: partlycloudy
+  - file: "pouring.bmp"
+    id: pouring
+  - file: "rainy.bmp"
+    id: rainy
+  - file: "snowy.bmp"
+    id: snowy
+  - file: "snowy-rainy.bmp"
+    id: snowy_rainy
+  - file: "sunny.bmp"
+    id: sunny
+  - file: "windy.bmp"
+    id: windy
+  - file: "windyvariant.bmp"
+    id: windy_variant
+  - file: "clearnight45.bmp"
+    id: clear_night45
+  - file: "cloudy45.bmp"
+    id: cloudy45
+  - file: "exceptional45.bmp"
+    id: exceptional45
+  - file: "fog45.bmp"
+    id: fog45
+  - file: "hail45.bmp"
+    id: hail45
+  - file: "lightning45.bmp"
+    id: lightning45
+  - file: "lightningrainy45.bmp"
+    id: lightning_rainy45
+  - file: "partlycloudy45.bmp"
+    id: partlycloudy45
+  - file: "pouring45.bmp"
+    id: pouring45
+  - file: "rainy45.bmp"
+    id: rainy45
+  - file: "snowy45.bmp"
+    id: snowy45
+  - file: "snowy-rainy45.bmp"
+    id: snowy_rainy45
+  - file: "sunny45.bmp"
+    id: sunny45
+  - file: "windy45.bmp"
+    id: windy45
+  - file: "windy-variant45.bmp"
+    id: windy_variant45
+  - file: "rain_0.bmp"
+    id: plant0
+  - file: "rain_10.bmp"
+    id: plant10
+  - file: "rain_20.bmp"
+    id: plant20
+  - file: "rain_30.bmp"
+    id: plant30
+  - file: "rain_40.bmp"
+    id: plant40
+  - file: "rain_50.bmp"
+    id: plant50
+  - file: "rain_60.bmp"
+    id: plant60
+  - file: "rain_70.bmp"
+    id: plant70
+  - file: "rain_80.bmp"
+    id: plant80
+  - file: "rain_90.bmp"
+    id: plant90
+  - file: "rain_100.bmp"
+    id: plant100
+  - file: "raccoon.bmp"
+    id: raccoon
+
+# not used anymore, in a previous iteration it showed the chance of seeing dogs in the park, depending on the time of day
+# (no, there is no public api for that, I just asked around in the neighbourhood when people usually walk their dogs)
+globals:
+  - id: dogmeter
+    type: int
+    restore_value: no
+    initial_value: '1'
+
+#technically the whole time block could go, as it was just used for the dogmeter
+time:
+  - platform: homeassistant
+    id: esptime
+    on_time:
+      - hours: 6
+        minutes: 0
+        seconds: 0
+        then:
+          - globals.set:
+              id: dogmeter
+              value: '2'
+      - hours: 9
+        minutes: 0
+        seconds: 0
+        then:
+          - globals.set:
+              id: dogmeter
+              value: '1'
+      - hours: 17
+        minutes: 0
+        seconds: 0
+        then:
+          - globals.set:
+              id: dogmeter
+              value: '2'
+      - hours: 21
+        minutes: 0
+        seconds: 0
+        then:
+          - globals.set:
+              id: dogmeter
+              value: '0'
+
+
+sensor:
+  - platform: homeassistant
+    id: outside_temperature
+    entity_id: sensor.lumi_lumi_weather_a5f3bb07_temperature #one of my first devices, let's not talk about naming conventions...
+    internal: true
+  - platform: homeassistant
+    id: outside_humidity
+    entity_id: sensor.lumi_lumi_weather_a5f3bb07_humidity
+    internal: true
+  - platform: homeassistant
+    id: windspeed #currently not displayed
+    entity_id: sensor.openweathermap_wind_speed
+    internal: true
+  - platform: homeassistant
+    id: maxtemp
+    entity_id: sensor.dailyoutsidemaxtemp
+    internal: true
+  - platform: homeassistant
+    id: mintemp
+    entity_id: sensor.dailyoutsidemintemp
+    internal: true
+    
+  - platform: homeassistant
+    id: uvindex
+    entity_id: sensor.openweathermap_uv_index
+    internal: true  
+  - platform: homeassistant
+    id: uvindexmax
+    entity_id: sensor.uvindextodaymax
+    internal: true
+    
+    
+  - platform: dht #temperature and humidity in the hallway, used for the main indoor values on the display
+    pin: 17
+    model: DHT22
+    temperature:
+      name: "Hallway Temperature"
+      id: hallwaytemp
+    humidity:
+      name: "Hallway Humidity"
+      id: hallwayhum
+    update_interval: 60s
+    
+    #co2 level in the hallway, sensor should be positioned roughly between chest and head height, and cannot be fully enclosed because, well, measuring the air
+    #the sensor was built when atmospheric co2 was still around 400ppm, so it takes 400 as base level. 
+    #technically this should now be compensated by adding 20ppm to the reading, never got around to adding it so far
+    #climate change is real
+  - platform: mhz19 
+    co2: 
+      name: "hallway co2"
+      id: hallwayco2
+      on_value_range: #neopixels light up yellow when co2 above 800, red when above 1000, turn off when under 800 again
+        - above: 800
+          below: 1000
+          then:
+            - light.turn_on:
+                id: led_notification_hallway
+                brightness: 20%
+                red: 50%
+                green: 30%
+                blue: 0%
+        - above: 999
+          then:
+            - light.turn_on:
+                id: led_notification_hallway
+                brightness: 20%
+                red: 100%
+                green: 0%
+                blue: 0%
+        - below: 800
+          then:
+            - light.turn_off:
+                id: led_notification_hallway
+    temperature:
+      name: "MH-Z19 Temperature" #the co2 sensor has a temp sensor, but it's useless, as it's an internal sensor
+    update_interval: 60s
+    automatic_baseline_calibration: false
+    
+    # all the led sensors here are helpers that allow me to trigger/set the individual leds of the neopixel from home assistant
+  - platform: homeassistant
+    id: led_id
+    entity_id: input_number.hallway_led_id
+    internal: true
+  - platform: homeassistant
+    id: led_brightness
+    entity_id: input_number.hallway_led_brightness
+    internal: true
+  - platform: homeassistant
+    id: led_red
+    entity_id: input_number.hallway_led_red
+    internal: true
+  - platform: homeassistant
+    id: led_green
+    entity_id: input_number.hallway_led_green
+    internal: true
+  - platform: homeassistant
+    id: led_blue
+    entity_id: input_number.hallway_led_blue
+    internal: true
+
+text_sensor:
+  - platform: homeassistant
+    id: outside_weather
+    entity_id: sensor.openweathermap_condition
+    internal: true
+  - platform: homeassistant
+    id: owm_forecast
+    entity_id: sensor.owm_hourly_forecasts
+    internal: true
+    attribute: forecast
+  - platform: homeassistant 
+    id: led_set_datetime #triggers the setting of the individual leds from home assistant based on helper values, currently not used
+    entity_id: input_datetime.hallway_led_settime
+    internal: true
+    on_value:
+      - if:
+          condition:
+            sensor.in_range:
+              id: led_id
+              above: 0
+              below: 4
+          then:
+            - light.addressable_set:
+                id: led_notification_hallway
+                range_from: !lambda |-
+                  return id(led_id).state - 1;
+                range_to: !lambda |-
+                  return id(led_id).state - 1;
+                red: !lambda |-
+                  return id(led_red).state;
+                green: !lambda |-
+                  return id(led_green).state;
+                blue: !lambda |-
+                  return id(led_blue).state;
+      - if:
+          condition:
+            sensor.in_range:
+              id: led_id
+              below: 1
+          then:
+            - light.turn_off:
+                id: led_notification_hallway              
+      - if:
+          condition:
+            sensor.in_range:
+              id: led_id
+              above: 3
+          then:
+            - light.turn_on:
+                id: led_notification_hallway
+                brightness: !lambda |-
+                  return id(led_brightness).state;
+                red: !lambda |-
+                  return id(led_red).state;
+                green: !lambda |-
+                  return id(led_green).state;
+                blue: !lambda |-
+                  return id(led_blue).state;
+
+
+binary_sensor:
+  - platform: gpio
+    pin:
+      number: 32
+      mode:
+        input: true
+        pullup: true
+      inverted: true
+    name: button1
+    filters:
+      - delayed_on: 10ms
+    on_press: #the only button where the functionality is defined within esphome, manually refreshes the display if you don't want to wait the 5 minutes to the next display update
+      - display.page.show: page1
+      - delay: 1s
+      - component.update: eink
+      
+  #buttons 2-5 are only used via HA automations
+  - platform: gpio
+    pin:
+      number: 12
+      mode:
+        input: true
+        pullup: true
+      inverted: true
+    name: button2 #toggles a trash helper in HA on or off, which in turn is also reflected on the display, but I wanted to have it managed centrally in HA
+    filters:
+      - delayed_on: 10ms
+      
+      
+  - platform: gpio
+    pin:
+      number: 4
+      mode:
+        input: true
+        pullup: true
+      inverted: true
+    name: button3 #switches all livingroom lights on via HA
+    filters:
+      - delayed_on: 10ms
+      
+  - platform: gpio
+    pin:
+      number: 27
+      mode:
+        input: true
+        pullup: true
+      inverted: true
+    name: button4 #sets the apartment to evening mode (less lights, music off), via HA automation
+    filters:
+      - delayed_on: 10ms
+
+      
+  - platform: gpio
+    pin:
+      number: 25
+      mode:
+        input: true
+        pullup: true
+      inverted: true
+    name: button5 #waits 10 seconds, then switches all lights in the apartment off, via HA automation
+    filters:
+      - delayed_on: 10ms
+      
+  - platform: homeassistant
+    id: bathroom_window
+    entity_id: binary_sensor.lumi_lumi_sensor_magnet_aq2_4420d107_on_off #very first zigbee sensor, never bothered to rename it properly
+    internal: true
+    on_state: #opening or closing the window triggers a display refresh, further down is the logic that shows or hides the window symbol
+      - display.page.show: page1
+      - delay: 1s #for whatever reason updating the display fails when done directly after redrawing it (by showing the first page), waiting a second solved that
+      - component.update: eink
+      
+  - platform: homeassistant
+    id: trash
+    entity_id: input_boolean.trash #central "emptying the trash needed or not" helper managed by HA
+    internal: true
+    on_state:
+      - display.page.show: page1
+      - delay: 1s
+      - component.update: eink
+
+
+spi:
+  clk_pin: 18
+  mosi_pin: 23
+
+display:
+  - platform: waveshare_epaper
+    cs_pin: 5
+    dc_pin: 16
+    busy_pin: 19
+    reset_pin: 33
+    model: 2.90inv2
+    rotation: 270°
+    update_interval: 300s # the displays needs a few seconds to do a full refresh, and most of the sensors only update once a minute anyway => 5 minutes between refreshs
+    full_update_every: 1 # i initially tried to get partial updates to work with waveshare displays and esphome, never got it to work, but that was years ago
+    #reset_duration: 2ms
+    id: eink
+    
+    pages:
+      - id: page1
+        lambda: |-
+          // maps the weather states to the corresponding image ids
+          std::map<std::string, image::Image *> imgDict;
+          imgDict["clear-night"] = id(clear_night);
+          imgDict["cloudy"] = id(cloudy);
+          imgDict["fog"] = id(fog);
+          imgDict["hail"] = id(hail);
+          imgDict["lightning"] = id(lightning);
+          imgDict["lightning-rainy"] = id(lightning_rainy);
+          imgDict["partlycloudy"] = id(partlycloudy);
+          imgDict["pouring"] = id(pouring);
+          imgDict["rainy"] = id(rainy);
+          imgDict["snowy"] = id(snowy);
+          imgDict["snowy-rainy"] = id(snowy_rainy);
+          imgDict["sunny"] = id(sunny);
+          imgDict["windy"] = id(windy);
+          imgDict["windy-variant"] = id(windy_variant);
+          imgDict["exceptional"] = id(exceptional);
+        
+          // draws the house
+          it.line(1, 33, 33, 1);
+          it.line(1, 34, 34, 1);
+          it.line(1, 35, 35, 1);
+          it.line(35, 1, 80, 45);
+          it.line(36, 1, 81, 45);
+          it.line(37, 1, 82, 45);
+          it.line(80, 45, 80, 126);
+          it.line(81, 45, 81, 126);
+          it.line(80, 125, 296, 125);
+          it.line(80, 126, 296, 126);
+          
+          it.image(235, 103, id(raccoon));
+          
+          // shows the trash icon based on the HA-imported helper state
+          if (id(trash).has_state()) {
+          if (id(trash).state == true) {
+          it.printf(80, 128, id(icons_24), TextAlign::BOTTOM_LEFT, "\U000F0A79");
+          }
+          }
+          
+          // draws the open window based on the HA-imported zigbee sensor state
+          if (id(bathroom_window).has_state()) {
+          if (id(bathroom_window).state == true) {
+          it.rectangle(80, 55, 20, 30);
+          it.rectangle(81, 56, 18, 28);
+          }
+          
+          }
+          
+          // displays the numerical outside weather infos
+          if (id(outside_temperature).has_state()) {
+          it.printf(186, 0, id(dejamonobold), TextAlign::TOP_LEFT, "%2.0f", id(outside_temperature).state);
+          it.printf(256, 0, id(dejamonobold), TextAlign::TOP_RIGHT, "°");
+          it.printf(296, 3, id(dejamonoboldsmall), TextAlign::TOP_RIGHT, "%.0f°", id(maxtemp).state);
+          it.printf(296, 23, id(dejamonoboldsmall), TextAlign::TOP_RIGHT, "%.0f°", id(mintemp).state);
+          it.printf(255, 43, id(dejamonoboldsmall), TextAlign::TOP_LEFT, "%.0f%%", id(outside_humidity).state);
+          it.printf(186, 43, id(dejamonoboldsmall), TextAlign::TOP_LEFT, "%.0f", id(uvindex).state);
+          it.printf(203, 43, id(icons_24), TextAlign::TOP_LEFT, "\U000F05A8");
+          it.printf(228, 43, id(dejamonoboldsmall), TextAlign::TOP_LEFT, "%.0f", id(uvindexmax).state);
+
+          }
+
+          // displays the numerical indoor weather/air infos
+          if (id(hallwayco2).has_state()) {
+          it.printf(10, 35, id(dejamonobold), TextAlign::TOP_LEFT, "%2.0f", id(hallwaytemp).state);
+          it.printf(80, 35, id(dejamonobold), TextAlign::TOP_RIGHT, "°");
+          it.printf(10, 75, id(dejamonoboldsmall), "%.0f%%", id(hallwayhum).state);
+          it.printf(10, 96, id(dejamonoboldsmall),  "%.0f", id(hallwayco2).state);
+          }
+
+          // displays the correct weather state image based on the mappings defined further up
+          if (id(outside_weather).has_state()) {
+          it.image(90, 2, imgDict[id(outside_weather).state]);
+          }
+
+          // parses the forecast json for the next hours and shows a plant image in the right height per "chance of rain" value per hour
+          if (id(owm_forecast).has_state())
+          {
+          DynamicJsonDocument doc(5048);
+          deserializeJson(doc, (id(owm_forecast).state.c_str()));
+          JsonArray root = doc.as<JsonArray>();
+          int plantstart = 105;
+          for (int d=0; d <= 11; ++d)
+          {
+          JsonObject root_1 = root[d];
+          float root_1_precipitation_probability = root_1["precipitation_probability"];
+          
+          int probability = (int)root_1_precipitation_probability;
+          
+          if (probability == 0) {
+          it.image(plantstart, 75, id(plant0));
+          }
+          if ((probability > 0) && (probability < 11 )){
+          it.image(plantstart, 75, id(plant10));
+          }
+          if ((probability > 10) && (probability < 21 )){
+          it.image(plantstart, 75, id(plant20));
+          }
+          if ((probability > 20) && (probability < 31 )){
+          it.image(plantstart, 75, id(plant30));
+          }
+          if ((probability > 30) && (probability < 41 )){
+          it.image(plantstart, 75, id(plant40));
+          }
+          if ((probability > 40) && (probability < 51 )){
+          it.image(plantstart, 75, id(plant50));
+          }
+          if ((probability > 50) && (probability < 61 )){
+          it.image(plantstart, 75, id(plant60));
+          }
+          if ((probability > 60) && (probability < 71 )){
+          it.image(plantstart, 75, id(plant70));
+          }
+          if ((probability > 70) && (probability < 81 )){
+          it.image(plantstart, 75, id(plant80));
+          }
+          if ((probability > 80) && (probability < 91 )){
+          it.image(plantstart, 75, id(plant90));
+          }
+          if (probability > 90){
+          it.image(plantstart, 75, id(plant10));
+          }
+          
+          plantstart += 10;
+                  
+          }
+              
+          
+          }
