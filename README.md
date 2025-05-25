@@ -8,6 +8,8 @@ Hardware:
 - quinled esp32
 - waveshare 2.9 inch epaper display (black&white)
 - neopixel pcb with 3 leds
+- DHT22 temperature/humidity sensor
+- MH-Z19 co2 sensor
 - 5 pushbuttons
 - wood enclosure, front attached with magnets, bottom open for sensors
 
